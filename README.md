@@ -35,9 +35,133 @@ STEP-5: Display the obtained cipher text.
 
 
 Program:
+```
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 
+char matrix[5][5];
+void generateMatrix(char key[])
+{
+    int used[26] = {0};
+    int i, j, k = 0;
 
+    used['J' - 'A'] = 1; 
 
+    for(i = 0; key[i] != '\0'; i++)
+    {
+        char ch = toupper(key[i]);
+        if(ch == 'J')
+            ch = 'I';
 
+        if(ch >= 'A' && ch <= 'Z' && !used[ch - 'A'])
+        {
+            matrix[k / 5][k % 5] = ch;
+            used[ch - 'A'] = 1;
+            k++;
+        }
+    }
+
+    for(i = 0; i < 26; i++)
+    {
+        if(!used[i])
+        {
+            matrix[k / 5][k % 5] = i + 'A';
+            k++;
+        }
+    }
+}
+void findPosition(char ch, int *row, int *col)
+{
+    if(ch == 'J')
+        ch = 'I';
+
+    int i, j;
+    for(i = 0; i < 5; i++)
+    {
+        for(j = 0; j < 5; j++)
+        {
+            if(matrix[i][j] == ch)
+            {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+int main()
+{
+    char key[30], text[30];
+    int i;
+
+    printf("Enter Key: ");
+    scanf("%s", key);
+
+    printf("Enter Plain Text: ");
+    scanf("%s", text);
+
+    generateMatrix(key);
+
+    printf("\nPlayfair Matrix:\n");
+    for(i = 0; i < 5; i++)
+    {
+        int j;
+        for(j = 0; j < 5; j++)
+        {
+            printf("%c ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+
+    printf("\nEncrypted Text: ");
+
+    for(i = 0; i < strlen(text); i += 2)
+    {
+        char a = toupper(text[i]);
+        char b;
+
+        if(i + 1 < strlen(text))
+            b = toupper(text[i + 1]);
+        else
+            b = 'X';
+
+        int r1, c1, r2, c2;
+
+        findPosition(a, &r1, &c1);
+        findPosition(b, &r2, &c2);
+
+        if(r1 == r2)   
+        {
+            printf("%c%c",
+                   matrix[r1][(c1 + 1) % 5],
+                   matrix[r2][(c2 + 1) % 5]);
+        }
+        else if(c1 == c2)  
+        {
+            printf("%c%c",
+                   matrix[(r1 + 1) % 5][c1],
+                   matrix[(r2 + 1) % 5][c2]);
+        }
+        else  
+        {
+            printf("%c%c",
+                   matrix[r1][c2],
+                   matrix[r2][c1]);
+        }
+    }
+
+    return 0;
+}
+```
 
 Output:
+
+<img width="1677" height="637" alt="image" src="https://github.com/user-attachments/assets/ffd38041-d3e8-4eb0-a37c-171a9c3f2ff5" />
+
+result:
+
+Thus, the Playfair Cipher algorithm was successfully implemented.
+
+
