@@ -40,25 +40,32 @@ Program:
 #include <string.h>
 #include <ctype.h>
 
-char matrix[5][5];
-void generateMatrix(char key[])
+char keyTable[5][5];
+
+void generateKeyTable(char key[])
 {
     int used[26] = {0};
-    int i, j, k = 0;
+    int i, j = 0, k = 0;
 
-    used['J' - 'A'] = 1; 
+    used['J' - 'A'] = 1;
 
     for(i = 0; key[i] != '\0'; i++)
     {
         char ch = toupper(key[i]);
+
         if(ch == 'J')
             ch = 'I';
 
         if(ch >= 'A' && ch <= 'Z' && !used[ch - 'A'])
         {
-            matrix[k / 5][k % 5] = ch;
+            keyTable[j][k++] = ch;
             used[ch - 'A'] = 1;
-            k++;
+
+            if(k == 5)
+            {
+                j++;
+                k = 0;
+            }
         }
     }
 
@@ -66,22 +73,29 @@ void generateMatrix(char key[])
     {
         if(!used[i])
         {
-            matrix[k / 5][k % 5] = i + 'A';
-            k++;
+            keyTable[j][k++] = i + 'A';
+
+            if(k == 5)
+            {
+                j++;
+                k = 0;
+            }
         }
     }
 }
+
 void findPosition(char ch, int *row, int *col)
 {
+    int i, j;
+
     if(ch == 'J')
         ch = 'I';
 
-    int i, j;
     for(i = 0; i < 5; i++)
     {
         for(j = 0; j < 5; j++)
         {
-            if(matrix[i][j] == ch)
+            if(keyTable[i][j] == ch)
             {
                 *row = i;
                 *col = j;
@@ -93,64 +107,98 @@ void findPosition(char ch, int *row, int *col)
 
 int main()
 {
-    char key[30], text[30];
-    int i;
+    char key[50], text[100], cipher[100], decrypted[100];
+    int i, r1, c1, r2, c2, len = 0;
 
-    printf("Enter Key: ");
+    printf("Enter the keyword: ");
     scanf("%s", key);
 
-    printf("Enter Plain Text: ");
+    printf("Enter the plain text: ");
     scanf("%s", text);
 
-    generateMatrix(key);
+    generateKeyTable(key);
 
-    printf("\nPlayfair Matrix:\n");
+    printf("\nKey Matrix:\n");
+
     for(i = 0; i < 5; i++)
     {
-        int j;
-        for(j = 0; j < 5; j++)
-        {
-            printf("%c ", matrix[i][j]);
-        }
-        printf("\n");
+        printf("%c %c %c %c %c\n",
+               keyTable[i][0], keyTable[i][1],
+               keyTable[i][2], keyTable[i][3],
+               keyTable[i][4]);
     }
 
-    printf("\nEncrypted Text: ");
+    /* ENCRYPTION */
 
-    for(i = 0; i < strlen(text); i += 2)
+    printf("\nCipher Text: ");
+
+    for(i = 0; text[i] != '\0'; i += 2)
     {
         char a = toupper(text[i]);
-        char b;
+        char b = text[i + 1] ? toupper(text[i + 1]) : 'X';
 
-        if(i + 1 < strlen(text))
-            b = toupper(text[i + 1]);
-        else
+        if(a == 'J')
+            a = 'I';
+
+        if(b == 'J')
+            b = 'I';
+
+        if(a == b)
             b = 'X';
-
-        int r1, c1, r2, c2;
 
         findPosition(a, &r1, &c1);
         findPosition(b, &r2, &c2);
 
-        if(r1 == r2)   
+        if(r1 == r2)
         {
-            printf("%c%c",
-                   matrix[r1][(c1 + 1) % 5],
-                   matrix[r2][(c2 + 1) % 5]);
+            cipher[len++] = keyTable[r1][(c1 + 1) % 5];
+            cipher[len++] = keyTable[r2][(c2 + 1) % 5];
         }
-        else if(c1 == c2)  
+        else if(c1 == c2)
         {
-            printf("%c%c",
-                   matrix[(r1 + 1) % 5][c1],
-                   matrix[(r2 + 1) % 5][c2]);
+            cipher[len++] = keyTable[(r1 + 1) % 5][c1];
+            cipher[len++] = keyTable[(r2 + 1) % 5][c2];
         }
-        else  
+        else
         {
-            printf("%c%c",
-                   matrix[r1][c2],
-                   matrix[r2][c1]);
+            cipher[len++] = keyTable[r1][c2];
+            cipher[len++] = keyTable[r2][c1];
         }
     }
+
+    cipher[len] = '\0';
+
+    printf("%s\n", cipher);
+
+    /* DECRYPTION */
+
+    printf("Decrypted Plain Text: ");
+
+    for(i = 0; cipher[i] != '\0'; i += 2)
+    {
+        findPosition(cipher[i], &r1, &c1);
+        findPosition(cipher[i + 1], &r2, &c2);
+
+        if(r1 == r2)
+        {
+            decrypted[i] = keyTable[r1][(c1 + 4) % 5];
+            decrypted[i + 1] = keyTable[r2][(c2 + 4) % 5];
+        }
+        else if(c1 == c2)
+        {
+            decrypted[i] = keyTable[(r1 + 4) % 5][c1];
+            decrypted[i + 1] = keyTable[(r2 + 4) % 5][c2];
+        }
+        else
+        {
+            decrypted[i] = keyTable[r1][c2];
+            decrypted[i + 1] = keyTable[r2][c1];
+        }
+    }
+
+    decrypted[len] = '\0';
+
+    printf("%s\n", decrypted);
 
     return 0;
 }
@@ -158,7 +206,7 @@ int main()
 
 Output:
 
-<img width="1677" height="637" alt="image" src="https://github.com/user-attachments/assets/ffd38041-d3e8-4eb0-a37c-171a9c3f2ff5" />
+<img width="474" height="428" alt="image" src="https://github.com/user-attachments/assets/22e7ff8f-2ab0-43a5-9047-4809c0ee0570" />
 
 result:
 
